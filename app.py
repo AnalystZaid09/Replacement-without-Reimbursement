@@ -28,7 +28,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_file, reim_file):
+def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_file, reim_file, days_threshold: int):
     """Process replacement data with all lookups and filters"""
     try:
         # Load Replace.csv
@@ -105,10 +105,10 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
         filtered_df.rename(columns={return_value_col: "CountIF"}, inplace=True)
         filtered_df.drop(columns=[lookup_key_col], inplace=True, errors="ignore")
         
-        # Filter: CountIF = 1 and Date_Difference >= 40
+        # 🔍 Filter: CountIF = 1 and Date_Difference >= days_threshold
         filtered_df_final = filtered_df[
             (filtered_df["CountIF"] == 1.0) &
-            (filtered_df["Date_Difference"] >= 40)
+            (filtered_df["Date_Difference"] >= days_threshold)
         ].copy()
         
         # Load Refund Only file
@@ -142,7 +142,7 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
                 (~Replace["Refund Check"].isna())
             ) &
             (
-                (Replace["Date_Difference"] >= 40)
+                (Replace["Date_Difference"] >= days_threshold)
             )
         ].copy()
         
@@ -198,12 +198,23 @@ with col2:
     bulk_rto_file = st.file_uploader("Bulk RTO Returns.xlsx", type=['xlsx'], key="bulk")
     reim_file = st.file_uploader("Reimbursement.xlsx", type=['xlsx'], key="reim")
 
+# ⏱️ Days slicer / input
+st.markdown("### ⏱️ Days Filter")
+days_threshold = st.number_input(
+    "Consider records older than (days):",
+    min_value=0,
+    max_value=365,
+    value=40,       # default 40 days
+    step=1,
+    help="Example: 10, 30, 40, 45, 60..."
+)
+
 # Process Button
 all_files = [replace_file, return_file, refund_file, bulk_rto_file, reim_file]
 if all(all_files):
     if st.button("🔍 Analyze Replacement Data", type="primary", use_container_width=True):
         with st.spinner("Processing data... This may take a moment."):
-            results = process_replacement_data(*all_files)
+            results = process_replacement_data(*all_files, days_threshold)
             
             if results:
                 st.success("✅ Analysis completed successfully!")
@@ -217,12 +228,18 @@ if all(all_files):
                     st.metric("Total Replacements", f"{len(results['main']):,}")
                 
                 with col2:
-                    st.metric("Damaged Returns (≥40 days)", f"{results['damaged_count']:,}", 
-                             help="Replacements with CARRIER_DAMAGED or CUSTOMER_DAMAGED status")
+                    st.metric(
+                        f"Damaged Returns (≥{int(days_threshold)} days)",
+                        f"{results['damaged_count']:,}", 
+                        help=f"Replacements with CARRIER_DAMAGED or CUSTOMER_DAMAGED status and age ≥ {int(days_threshold)} days"
+                    )
                 
                 with col3:
-                    st.metric("Refund without Return (≥40 days)", f"{results['refund_count']:,}",
-                             help="Refunds processed but no return record found")
+                    st.metric(
+                        f"Refund without Return (≥{int(days_threshold)} days)",
+                        f"{results['refund_count']:,}",
+                        help=f"Refunds processed but no return record found, age ≥ {int(days_threshold)} days"
+                    )
                 
                 # Data Preview
                 st.markdown("### 📊 Data Preview")
@@ -230,11 +247,11 @@ if all(all_files):
                 tab1, tab2, tab3 = st.tabs(["Damaged Returns", "Refund Without Return", "Full Data"])
                 
                 with tab1:
-                    st.markdown("**Replacements with damaged items (≥40 days old)**")
+                    st.markdown(f"**Replacements with damaged items (≥{int(days_threshold)} days old)**")
                     st.dataframe(results['damaged_returns'], use_container_width=True)
                 
                 with tab2:
-                    st.markdown("**Replacements with refund but no return record (≥40 days old)**")
+                    st.markdown(f"**Replacements with refund but no return record (≥{int(days_threshold)} days old)**")
                     st.dataframe(results['refund_without_return'], use_container_width=True)
                 
                 with tab3:
