@@ -28,11 +28,19 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def read_any_file(file, sheet_name=None):
+    if file.name.lower().endswith(".csv"):
+        return pd.read_csv(file)
+    else:
+        if sheet_name:
+            return pd.read_excel(file, sheet_name=sheet_name)
+        return pd.read_excel(file)
+        
 def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_file, reim_file, days_threshold: int):
     """Process replacement data with all lookups and filters"""
     try:
         # Load Replace.csv
-        Replace = pd.read_csv(replace_file)
+        Replace = read_any_file(replace_file)
         
         # Convert date and calculate difference
         Replace['Date'] = pd.to_datetime(Replace['shipment-date'], errors='coerce').dt.date
@@ -40,7 +48,7 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
         Replace['Date_Difference'] = (pd.to_datetime(Replace['Today_Date']) - pd.to_datetime(Replace['Date'])).dt.days
         
         # Load Return.csv
-        Return = pd.read_csv(return_file)
+        Return = read_any_file(return_file)
         
         # FBA Original Return Lookup (Column I → Column B → Column 8)
         lookup_value_col = Replace.columns[8]
@@ -79,7 +87,7 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
         ].copy()
         
         # Load Reimbursement
-        Reimbursement = pd.read_excel(reim_file, sheet_name='Sheet1')
+        Reimbursement =read_any_file(reim_file, sheet_name='Sheet1')
         
         # Filter reimbursement data
         filtered_reimb = Reimbursement[
@@ -112,7 +120,7 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
         ].copy()
         
         # Load Refund Only file
-        Refund = pd.read_excel(refund_file, sheet_name='Sheet1')
+        Refund = read_any_file(refund_file, sheet_name='Sheet1')
         
         # Refund Check Lookup
         lookup_value_col = Replace.columns[8]
@@ -147,7 +155,7 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
         ].copy()
         
         # Load Bulk RTO
-        BulkRTO = pd.read_excel(bulk_rto_file, sheet_name="All")
+        BulkRTO = read_any_file(bulk_rto_file, sheet_name="All")
         
         # Door Step Return Lookup
         lookup_value_col = filtered_df_step2.columns[8]
@@ -190,13 +198,13 @@ st.markdown("### 📁 Upload Required Files")
 col1, col2 = st.columns(2)
 
 with col1:
-    replace_file = st.file_uploader("Replace.csv", type=['csv'], key="replace")
-    return_file = st.file_uploader("Return.csv", type=['csv'], key="return")
-    refund_file = st.file_uploader("Refund Only.xlsx", type=['xlsx'], key="refund")
+    replace_file = st.file_uploader("Replace File", type=['csv','xlsx'], key="replace")
+    return_file = st.file_uploader("Return File", type=['csv','xlsx'], key="return")
+    refund_file = st.file_uploader("Refund Only File", type=['xlsx','csv'], key="refund")
 
 with col2:
-    bulk_rto_file = st.file_uploader("Bulk RTO Returns.xlsx", type=['xlsx'], key="bulk")
-    reim_file = st.file_uploader("Reimbursement.xlsx", type=['xlsx'], key="reim")
+    bulk_rto_file = st.file_uploader("Bulk RTO Returns File", type=['xlsx','csv'], key="bulk")
+    reim_file = st.file_uploader("Reimbursement File", type=['xlsx','csv'], key="reim")
 
 # ⏱️ Days slicer / input
 st.markdown("### ⏱️ Days Filter")
@@ -301,3 +309,4 @@ else:
 # Footer
 st.markdown("---")
 st.markdown("*Amazon Seller Replacement & Return Analysis Tool*")
+
