@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, date
 import io
 
-st.set_page_config(page_title="Amazon Replacement Analyzer", page_icon="🔄", layout="wide")
+st.set_page_config(page_title="Amazon Replacement Without Reimbursement Analyzer", page_icon="🔄", layout="wide")
 
 # Custom CSS
 st.markdown("""
@@ -189,7 +189,7 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
         return None
 
 # Main App
-st.markdown('<div class="main-header">🔄 Amazon Replacement Data Analyzer</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-header">🔄 Amazon Replacement Without Reimbursement Data Analyzer</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">Upload your files to analyze replacement and return data</div>', unsafe_allow_html=True)
 
 # File Upload Section
@@ -309,4 +309,5 @@ else:
 # Footer
 st.markdown("---")
 st.markdown("*Amazon Seller Replacement & Return Analysis Tool*")
+
 
