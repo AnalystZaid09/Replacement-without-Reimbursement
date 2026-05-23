@@ -43,9 +43,22 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
         Replace = read_any_file(replace_file)
         
         # Convert date and calculate difference
-        Replace['Date'] = pd.to_datetime(Replace['shipment-date'], errors='coerce').dt.date
-        Replace['Today_Date'] = date.today()
-        Replace['Date_Difference'] = (pd.to_datetime(Replace['Today_Date']) - pd.to_datetime(Replace['Date'])).dt.days
+        # Replace['Date'] = pd.to_datetime(Replace['shipment-date'], errors='coerce').dt.date
+        # Replace['Today_Date'] = date.today()
+        # Replace['Date_Difference'] = (pd.to_datetime(Replace['Today_Date']) - pd.to_datetime(Replace['Date'])).dt.days
+        # Convert date and calculate difference
+        Replace['Date'] = pd.to_datetime(
+            Replace['shipment-date'],
+            errors='coerce',
+            utc=True
+        ).dt.date
+        
+        Replace['Today_Date'] = pd.Timestamp.utcnow().date()
+        
+        Replace['Date_Difference'] = (
+            pd.Timestamp.utcnow().normalize() -
+            pd.to_datetime(Replace['Date'])
+        ).dt.days
         
         # Load Return.csv
         Return = read_any_file(return_file)
