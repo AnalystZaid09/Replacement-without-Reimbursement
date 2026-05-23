@@ -48,8 +48,14 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
             errors='coerce',
             utc=True
         ).dt.tz_convert(None)
-        Replace['Today_Date'] = date.today()
-        Replace['Date_Difference'] = (pd.to_datetime(Replace['Today_Date']) - pd.to_datetime(Replace['Date'])).dt.days
+        
+        today = pd.Timestamp.now().normalize()
+        
+        Replace['Date_Difference'] = (
+            today - Replace['Date']
+        ).dt.days
+        # Replace['Today_Date'] = date.today()
+        # Replace['Date_Difference'] = (pd.to_datetime(Replace['Today_Date']) - pd.to_datetime(Replace['Date'])).dt.days
         # Convert date and calculate difference
         # Replace['Date'] = pd.to_datetime(
         #     Replace['shipment-date'],
