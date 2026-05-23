@@ -43,7 +43,11 @@ def process_replacement_data(replace_file, return_file, refund_file, bulk_rto_fi
         Replace = read_any_file(replace_file)
         
         # Convert date and calculate difference
-        Replace['Date'] = pd.to_datetime(Replace['shipment-date'], errors='coerce').dt.date
+        Replace['Date'] = pd.to_datetime(
+            Replace['shipment-date'],
+            errors='coerce',
+            utc=True
+        ).dt.tz_convert(None)
         Replace['Today_Date'] = date.today()
         Replace['Date_Difference'] = (pd.to_datetime(Replace['Today_Date']) - pd.to_datetime(Replace['Date'])).dt.days
         # Convert date and calculate difference
